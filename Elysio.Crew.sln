@@ -1,0 +1,44 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-Orchestration", "00-Orchestration", "{DACB60FA-1C34-4B06-9654-D2C5A3429942}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "10-Client-Elysio", "10-Client-Elysio", "{47DFD011-CA52-4D72-809F-E9D717381275}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "20-API", "20-API", "{54047793-F773-4814-831D-99FCADD6A729}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elysio.Crew.AppHost", "00-Orchestration\Elysio.Crew.AppHost\Elysio.Crew.AppHost.csproj", "{15CBFA87-A355-40E6-A2E1-E9C202116D8D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elysio.Crew.ServiceDefaults", "00-Orchestration\Elysio.Crew.ServiceDefaults\Elysio.Crew.ServiceDefaults.csproj", "{2FEF8C08-0B1A-4ACB-91DD-2A29A9A2016F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elysio.API", "20-API\Elysio.API\Elysio.API.csproj", "{EC8E0F06-1CD8-4812-BBC9-E1E377A378C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15CBFA87-A355-40E6-A2E1-E9C202116D8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15CBFA87-A355-40E6-A2E1-E9C202116D8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15CBFA87-A355-40E6-A2E1-E9C202116D8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15CBFA87-A355-40E6-A2E1-E9C202116D8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FEF8C08-0B1A-4ACB-91DD-2A29A9A2016F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FEF8C08-0B1A-4ACB-91DD-2A29A9A2016F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FEF8C08-0B1A-4ACB-91DD-2A29A9A2016F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FEF8C08-0B1A-4ACB-91DD-2A29A9A2016F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC8E0F06-1CD8-4812-BBC9-E1E377A378C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC8E0F06-1CD8-4812-BBC9-E1E377A378C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC8E0F06-1CD8-4812-BBC9-E1E377A378C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC8E0F06-1CD8-4812-BBC9-E1E377A378C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{15CBFA87-A355-40E6-A2E1-E9C202116D8D} = {DACB60FA-1C34-4B06-9654-D2C5A3429942}
+		{2FEF8C08-0B1A-4ACB-91DD-2A29A9A2016F} = {DACB60FA-1C34-4B06-9654-D2C5A3429942}
+		{EC8E0F06-1CD8-4812-BBC9-E1E377A378C3} = {54047793-F773-4814-831D-99FCADD6A729}
+	EndGlobalSection
+EndGlobal
