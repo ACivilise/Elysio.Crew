@@ -1,6 +1,6 @@
 @Elysio.API_HostAddress = http://localhost:5251
 
-GET {{Elysio.API_HostAddress}}/weatherforecast/
+GET {{Elysio.API_HostAddress}}/
 Accept: application/json
 
 ###

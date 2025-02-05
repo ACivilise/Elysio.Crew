@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\40-Data\Elysio.Data\Elysio.Data.csproj" />
+    <ProjectReference Include="..\..\50-Models\Elysio.Mappers\Elysio.Mappers.csproj" />
+    <ProjectReference Include="..\..\50-Models\Elysio.Models\Elysio.Models.csproj" />
+    <ProjectReference Include="..\Elysio.Core.Helpers\Elysio.Core.Helpers.csproj" />
+  </ItemGroup>
+
+</Project>

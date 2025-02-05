@@ -1,9 +1,47 @@
+#pragma warning disable SKEXP0070
+
+using Elysio.API.Routes;
+using Elysio.Data;
+using Elysio.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
+using Microsoft.SemanticKernel;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddServiceDefaults();
+// Add logging services
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+    loggingBuilder.AddDebug();
+    // Add other logging providers as needed
+});
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+var isDevelopment = builder.Environment.IsDevelopment();
+
+// Add service defaults and other services
+builder.AddServiceDefaults();
+builder.AddQdrantClient("qdrant");
+builder.AddAzureBlobClient("BlobConnection");
+builder.AddNpgsqlDbContext<ApplicationDbContext>(
+    "postgresdb",
+    null,
+    options => options.UseNpgsql(x => x.MigrationsAssembly("Elysio.Data"))
+);
+
+string connectionString = builder.Configuration.GetConnectionString("Ollama") ?? "";
+builder.Services.AddOllamaChatCompletion("llama3.2:1b", new Uri(connectionString));
+
+// Authentication and Authorization
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"))
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
+
+var (policy, adminPolicy) = builder.Services.AddGroupPolicyExtension(builder.Configuration);
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -11,35 +49,18 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (isDevelopment)
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapAgentsEndpoints(policy);
+app.MapUsersEndpoints(policy);
+app.MapConversationsEndpoints(policy);
+app.MapMessagesEndpoints(policy);
+app.MapRoomsEndpoints(policy);
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
