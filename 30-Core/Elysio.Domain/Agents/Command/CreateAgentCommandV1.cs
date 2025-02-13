@@ -1,5 +1,4 @@
-﻿using Elysio.Core.Helpers;
-using Elysio.Data;
+﻿using Elysio.Data;
 using Elysio.Entities;
 using Elysio.Mappers;
 using Elysio.Models.DTOs;
@@ -11,7 +10,6 @@ namespace Elysio.Domain.Agents.Command;
 
 public class CreateAgentCommandV1 : IRequest<AgentDTO>
 {
-    public string UserEmail { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Prompt { get; set; } = string.Empty;
     public double Temperature { get; set; }
@@ -24,10 +22,6 @@ public class CreateAgentCommandV1Validator
 {
     public CreateAgentCommandV1Validator()
     {
-        RuleFor(a => a.UserEmail)
-            .Matches(@"^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$")
-            .WithMessage("Email invalid par rapport à la regex @\"^[\\w-]+(\\.[\\w-]+)*@([\\w-]+\\.)+[a-zA-Z]{2,7}$\"");
-
         RuleFor(a => a.Name)
             .NotNull();
 
@@ -42,8 +36,6 @@ public class CreateAgentCommandV1Handler(ApplicationDbContext dbContext)
     async Task<AgentDTO> IRequestHandler<CreateAgentCommandV1, AgentDTO>.Handle(
         CreateAgentCommandV1 request, CancellationToken cancellationToken)
     {
-        var user = await CommandHelper.ValidateUser(dbContext, request.UserEmail);
-
         // on crée une conversation associé à cet utilisateur
         var newId = Guid.NewGuid();
         dbContext.Agents.Add(new Agent
@@ -54,7 +46,6 @@ public class CreateAgentCommandV1Handler(ApplicationDbContext dbContext)
             Temperature = request.Temperature,
             Model = request.Model,
             Description = request.Description,
-            CreatorId = user.Id,
             CreatedAt = DateTimeOffset.UtcNow
         });
 

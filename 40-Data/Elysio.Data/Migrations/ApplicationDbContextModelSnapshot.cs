@@ -46,9 +46,6 @@ namespace Elysio.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -70,14 +67,7 @@ namespace Elysio.Data.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UpdaterId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatorId");
-
-                    b.HasIndex("UpdaterId");
 
                     b.ToTable("Agents");
                 });
@@ -91,9 +81,6 @@ namespace Elysio.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -101,19 +88,17 @@ namespace Elysio.Data.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("RoomId1")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UpdaterId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatorId");
 
                     b.HasIndex("RoomId");
 
-                    b.HasIndex("UpdaterId");
+                    b.HasIndex("RoomId1");
 
                     b.ToTable("Conversations");
                 });
@@ -127,6 +112,9 @@ namespace Elysio.Data.Migrations
                     b.Property<Guid?>("AgentId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AgentId1")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -134,11 +122,11 @@ namespace Elysio.Data.Migrations
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ConversationId1")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
@@ -146,18 +134,15 @@ namespace Elysio.Data.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UpdaterId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AgentId");
 
+                    b.HasIndex("AgentId1");
+
                     b.HasIndex("ConversationId");
 
-                    b.HasIndex("CreatorId");
-
-                    b.HasIndex("UpdaterId");
+                    b.HasIndex("ConversationId1");
 
                     b.ToTable("Messages");
                 });
@@ -171,9 +156,6 @@ namespace Elysio.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -184,45 +166,9 @@ namespace Elysio.Data.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UpdaterId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatorId");
-
-                    b.HasIndex("UpdaterId");
 
                     b.ToTable("Rooms");
-                });
-
-            modelBuilder.Entity("Elysio.Entities.User", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("LastLoginAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("AgentRoom", b =>
@@ -240,94 +186,44 @@ namespace Elysio.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Elysio.Entities.Agent", b =>
-                {
-                    b.HasOne("Elysio.Entities.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Elysio.Entities.User", "Updater")
-                        .WithMany()
-                        .HasForeignKey("UpdaterId");
-
-                    b.Navigation("Creator");
-
-                    b.Navigation("Updater");
-                });
-
             modelBuilder.Entity("Elysio.Entities.Conversation", b =>
                 {
-                    b.HasOne("Elysio.Entities.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Elysio.Entities.Room", "Room")
-                        .WithMany("Conversations")
+                        .WithMany()
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Elysio.Entities.User", "Updater")
-                        .WithMany()
-                        .HasForeignKey("UpdaterId");
-
-                    b.Navigation("Creator");
+                    b.HasOne("Elysio.Entities.Room", null)
+                        .WithMany("Conversations")
+                        .HasForeignKey("RoomId1");
 
                     b.Navigation("Room");
-
-                    b.Navigation("Updater");
                 });
 
             modelBuilder.Entity("Elysio.Entities.Message", b =>
                 {
                     b.HasOne("Elysio.Entities.Agent", "Agent")
-                        .WithMany("Messages")
+                        .WithMany()
                         .HasForeignKey("AgentId");
 
-                    b.HasOne("Elysio.Entities.Conversation", "Conversation")
+                    b.HasOne("Elysio.Entities.Agent", null)
                         .WithMany("Messages")
+                        .HasForeignKey("AgentId1");
+
+                    b.HasOne("Elysio.Entities.Conversation", "Conversation")
+                        .WithMany()
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Elysio.Entities.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Elysio.Entities.User", "Updater")
-                        .WithMany()
-                        .HasForeignKey("UpdaterId");
+                    b.HasOne("Elysio.Entities.Conversation", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId1");
 
                     b.Navigation("Agent");
 
                     b.Navigation("Conversation");
-
-                    b.Navigation("Creator");
-
-                    b.Navigation("Updater");
-                });
-
-            modelBuilder.Entity("Elysio.Entities.Room", b =>
-                {
-                    b.HasOne("Elysio.Entities.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Elysio.Entities.User", "Updater")
-                        .WithMany()
-                        .HasForeignKey("UpdaterId");
-
-                    b.Navigation("Creator");
-
-                    b.Navigation("Updater");
                 });
 
             modelBuilder.Entity("Elysio.Entities.Agent", b =>

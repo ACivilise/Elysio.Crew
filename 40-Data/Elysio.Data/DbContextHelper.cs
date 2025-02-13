@@ -12,19 +12,13 @@ public static class DbContextHelper
     /// <returns><paramref name="app"/></returns>
     public static IServiceCollection MigrateDb(this IServiceCollection services)
     {
-        try
+        using (var scope = services.BuildServiceProvider())
         {
-            using (var scope = services.BuildServiceProvider())
-            {
-                var applicationContext = scope.GetRequiredService<ApplicationDbContext>();
-                //applicationContext.Database.EnsureCreated();
-                var pendingMigrations = applicationContext.Database.GetPendingMigrations().ToList();
-                if (pendingMigrations.Count > 0)
-                    applicationContext.Database.Migrate();
-            }
-        }
-        catch (Exception ex)
-        {
+            var applicationContext = scope.GetRequiredService<ApplicationDbContext>();
+            //applicationContext.Database.EnsureCreated();
+            var pendingMigrations = applicationContext.Database.GetPendingMigrations().ToList();
+            if (pendingMigrations.Count > 0)
+                applicationContext.Database.Migrate();
         }
         return services;
     }

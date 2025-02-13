@@ -11,7 +11,6 @@ public class ApplicationDbContext : DbContext
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 
-    public DbSet<User> Users { get; set; }
     public DbSet<Agent> Agents { get; set; }
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Conversation> Conversations { get; set; }
@@ -23,24 +22,23 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
         modelBuilder.Entity<Agent>()
-        .HasOne(p => p.Creator)
-        .WithMany()
-        .HasForeignKey(p => p.CreatorId);
+       .HasMany(e => e.Rooms)
+       .WithMany(e => e.Agents);
 
-        modelBuilder.Entity<Agent>()
-        .HasOne(p => p.Updater)
+        modelBuilder.Entity<Message>()
+        .HasOne(p => p.Agent)
         .WithMany()
-        .HasForeignKey(p => p.UpdaterId);
+        .HasForeignKey(p => p.AgentId);
 
-        modelBuilder.Entity<Room>()
-        .HasOne(p => p.Creator)
+        modelBuilder.Entity<Message>()
+        .HasOne(p => p.Conversation)
         .WithMany()
-        .HasForeignKey(p => p.CreatorId);
+        .HasForeignKey(p => p.ConversationId);
 
-        modelBuilder.Entity<Room>()
-        .HasOne(p => p.Updater)
+        modelBuilder.Entity<Conversation>()
+        .HasOne(p => p.Room)
         .WithMany()
-        .HasForeignKey(p => p.UpdaterId);
+        .HasForeignKey(p => p.RoomId);
     }
 }
 

@@ -1,5 +1,4 @@
-﻿using Elysio.Core.Helpers;
-using Elysio.Data;
+﻿using Elysio.Data;
 using Elysio.Models.Exceptions;
 using FluentValidation;
 using MediatR;
@@ -10,7 +9,6 @@ namespace Elysio.Domain.Agents.Command;
 public class DeleteAgentCommandV1 : IRequest<Unit>
 {
     public Guid Id { get; set; }
-    public string UserEmail { get; set; } = string.Empty;
 }
 
 public class DeleteAgentCommandV1Validator
@@ -18,9 +16,6 @@ public class DeleteAgentCommandV1Validator
 {
     public DeleteAgentCommandV1Validator()
     {
-        RuleFor(a => a.UserEmail)
-            .Matches(@"^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$")
-            .WithMessage("Email invalid par rapport à la regex @\"^[\\w-]+(\\.[\\w-]+)*@([\\w-]+\\.)+[a-zA-Z]{2,7}$\"");
     }
 }
 
@@ -30,9 +25,7 @@ public class DeleteAgentCommandV1Handler(ApplicationDbContext dbContext)
     async Task<Unit> IRequestHandler<DeleteAgentCommandV1, Unit>.Handle(
         DeleteAgentCommandV1 request, CancellationToken cancellationToken)
     {
-        var user = await CommandHelper.ValidateUser(dbContext, request.UserEmail);
-
-        var agent = await dbContext.Agents.FirstOrDefaultAsync(a => a.CreatorId == user.Id && a.Id == request.Id);
+        var agent = await dbContext.Agents.FirstOrDefaultAsync(a => a.Id == request.Id);
 
         if (agent == null)
             throw new NotFoundException("Agent", request.Id);

@@ -1,11 +1,9 @@
 #pragma warning disable SKEXP0070
 
+using Elsio.Crew.Domain;
 using Elysio.API.Routes;
 using Elysio.Data;
-using Elysio.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Web;
 using Microsoft.SemanticKernel;
 using Scalar.AspNetCore;
 
@@ -23,26 +21,21 @@ var isDevelopment = builder.Environment.IsDevelopment();
 
 // Add service defaults and other services
 builder.AddServiceDefaults();
-builder.AddQdrantClient("qdrant");
-builder.AddAzureBlobClient("BlobConnection");
 builder.AddNpgsqlDbContext<ApplicationDbContext>(
     "postgresdb",
     null,
     options => options.UseNpgsql(x => x.MigrationsAssembly("Elysio.Data"))
 );
+builder.Services.MigrateDb();
 
 string connectionString = builder.Configuration.GetConnectionString("Ollama") ?? "";
 builder.Services.AddOllamaChatCompletion("llama3.2:1b", new Uri(connectionString));
 
-// Authentication and Authorization
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"))
-    .EnableTokenAcquisitionToCallDownstreamApi()
-    .AddInMemoryTokenCaches();
-
-var (policy, adminPolicy) = builder.Services.AddGroupPolicyExtension(builder.Configuration);
+builder.Services.AddCoreServices();
+builder.Services.AddDomainServices();
 
 builder.Services.AddOpenApi();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
@@ -54,13 +47,22 @@ if (isDevelopment)
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+else
+{
+    app.Logger.LogInformation("Environment is Production, applying security headers");
+    app.UseSecurityHeaders();
+}
 
 app.UseHttpsRedirection();
 
-app.MapAgentsEndpoints(policy);
-app.MapUsersEndpoints(policy);
-app.MapConversationsEndpoints(policy);
-app.MapMessagesEndpoints(policy);
-app.MapRoomsEndpoints(policy);
+app.UseCors(static builder =>
+    builder.AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowAnyOrigin());
+
+app.MapAgentsEndpoints()
+    .MapConversationsEndpoints()
+    .MapMessagesEndpoints()
+    .MapRoomsEndpoints();
 
 app.Run();
