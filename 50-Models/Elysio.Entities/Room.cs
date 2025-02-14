@@ -7,6 +7,6 @@ public class Room
     public DateTimeOffset UpdatedAt { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public List<Agent> Agents { get; } = [];
-    public List<Conversation> Conversations { get; } = [];
+    public List<Agent> Agents { get; set; } = new();
+    public List<Conversation> Conversations { get; } = new();
 }

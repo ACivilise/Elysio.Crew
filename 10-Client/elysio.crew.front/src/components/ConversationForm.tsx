@@ -1,36 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ConversationDTO, RoomDTO } from "@/models";
 
 interface ConversationFormProps {
   rooms: RoomDTO[];
-  onSubmit: (conversation: Omit<ConversationDTO, "id" | "createdAt" | "updatedAt" | "messages">) => Promise<void>;
+  onSubmit: (conversation: { id?: string; name: string; roomId: string; room?: RoomDTO }) => Promise<void>;
+  initialValues?: ConversationDTO;
 }
 
-export function ConversationForm({ rooms, onSubmit }: ConversationFormProps) {
+export function ConversationForm({ rooms, onSubmit, initialValues }: ConversationFormProps) {
   const [name, setName] = useState("");
   const [roomId, setRoomId] = useState("");
+
+  useEffect(() => {
+    if (initialValues) {
+      setName(initialValues.name);
+      setRoomId(initialValues.roomId);
+    }
+  }, [initialValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Find the selected room object
     const selectedRoom = rooms.find(room => room.id === roomId);
 
     await onSubmit({
+      id: initialValues?.id,
       name,
       roomId,
       room: selectedRoom
     });
     
-    // Reset form
-    setName("");
-    setRoomId("");
+    if (!initialValues) {
+      setName("");
+      setRoomId("");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium">
+        <label htmlFor="name" className="block text-sm font-medium text-gray-300">
           Name
         </label>
         <input
@@ -38,19 +47,19 @@ export function ConversationForm({ rooms, onSubmit }: ConversationFormProps) {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-gray-100 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           required
         />
       </div>
       <div>
-        <label htmlFor="roomId" className="block text-sm font-medium">
+        <label htmlFor="roomId" className="block text-sm font-medium text-gray-300">
           Select Room
         </label>
         <select
           id="roomId"
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-gray-100 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           required
         >
           <option value="">Select a room...</option>
@@ -63,9 +72,9 @@ export function ConversationForm({ rooms, onSubmit }: ConversationFormProps) {
       </div>
       <button
         type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        className="bg-blue-600 text-gray-100 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
       >
-        Create Conversation
+        {initialValues ? 'Update Conversation' : 'Create Conversation'}
       </button>
     </form>
   );

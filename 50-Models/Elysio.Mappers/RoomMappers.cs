@@ -17,8 +17,8 @@ public static class RoomMappers
             UpdatedAt = room.UpdatedAt,
             Name = room.Name,
             Description = room.Description,
-            Agents = room.Agents.Select(a => a.ToDto()).ToList(),
-            Conversations = room.Conversations.Select(a => a.ToDto()).ToList()
+            Agents = room.Agents?.Select(a => a.ToDto(mapRoom: false)).ToList() ?? new List<AgentDTO>(),
+            Conversations = room.Conversations?.Select(a => a.ToDto()).ToList() ?? new List<ConversationDTO>()
         };
     }
 }

@@ -18,7 +18,7 @@ public static class ConversationMappers
             RoomId = conversation.RoomId,
             Name = conversation.Name,
             Room = conversation.Room?.ToDto(),
-            Messages = conversation.Messages.Select(m => m.ToDto()).ToList(),
+            Messages = conversation.Messages?.Select(m => m.ToDto()).ToList() ?? new List<MessageDTO>(),
         };
     }
 }

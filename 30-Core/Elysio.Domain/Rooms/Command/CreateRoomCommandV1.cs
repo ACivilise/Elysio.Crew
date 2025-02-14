@@ -12,38 +12,38 @@ public class CreateRoomCommandV1 : IRequest<RoomDTO>
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public List<Guid> AgentIds { get; set; } = new();
 }
 
-public class CreateRoomCommandV1Validator
-    : AbstractValidator<CreateRoomCommandV1>
+public class CreateRoomCommandV1Validator : AbstractValidator<CreateRoomCommandV1>
 {
     public CreateRoomCommandV1Validator()
     {
-        RuleFor(a => a.Name)
-            .NotNull();
+        RuleFor(a => a.Name).NotEmpty();
     }
 }
 
-public class CreateRoomCommandV1Handler(ApplicationDbContext dbContext)
-    : IRequestHandler<CreateRoomCommandV1, RoomDTO>
+public class CreateRoomCommandV1Handler(ApplicationDbContext dbContext) : IRequestHandler<CreateRoomCommandV1, RoomDTO>
 {
     async Task<RoomDTO> IRequestHandler<CreateRoomCommandV1, RoomDTO>.Handle(
         CreateRoomCommandV1 request, CancellationToken cancellationToken)
     {
-        // on crée une conversation associé à cet utilisateur
-        var newId = Guid.NewGuid();
-        dbContext.Rooms.Add(new Room
+        var agents = await dbContext.Agents
+            .Where(a => request.AgentIds.Contains(a.Id))
+            .ToListAsync(cancellationToken);
+
+        var room = new Room
         {
-            Id = newId,
+            Id = Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
-            CreatedAt = DateTimeOffset.UtcNow
-        });
+            CreatedAt = DateTimeOffset.UtcNow,
+            Agents = agents
+        };
 
+        dbContext.Rooms.Add(room);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var newRoom = await dbContext.Rooms.FirstAsync(c => c.Id == newId);
-
-        return newRoom.ToDto();
+        return room.ToDto();
     }
 }

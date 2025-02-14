@@ -25,7 +25,8 @@ public class GetAgentsQueryV1Handler(ApplicationDbContext dbContext)
     async Task<IReadOnlyList<AgentDTO>> IRequestHandler<GetAgentsQueryV1, IReadOnlyList<AgentDTO>>.Handle(
         GetAgentsQueryV1 request, CancellationToken cancellationToken)
     {
-        var agents = dbContext.Agents;
-        return await agents.Select(a => a.ToDto()).ToListAsync();
+        var agents = dbContext.Agents
+            .AsNoTracking();
+        return await agents.Select(a => a.ToDto(true)).ToListAsync();
     }
 }

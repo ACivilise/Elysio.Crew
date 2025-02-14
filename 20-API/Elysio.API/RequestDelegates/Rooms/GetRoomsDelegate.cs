@@ -9,14 +9,16 @@ public class GetRoomsDelegate
     public static RequestDelegate GetDelegate => async context =>
     {
         var serviceProvider = context.RequestServices;
-        var mediator = serviceProvider.GetService<IMediator>();
-        var logger = serviceProvider.GetService<ILogger<GetRoomsDelegate>>();
+        var mediator = serviceProvider.GetRequiredService<IMediator>();
+        var logger = serviceProvider.GetRequiredService<ILogger<GetRoomsDelegate>>();
         try
         {
+            var includeAgents = context.Request.Query["agents"].ToString().ToLowerInvariant() == "true";
             var query = new GetRoomsQueryV1
             {
+                IncludeAgents = includeAgents
             };
-            var result = await mediator.Send(query, cancellationToken: context.RequestAborted);
+            var result = await mediator.Send(query, context.RequestAborted);
 
             if (result == null)
             {
@@ -28,7 +30,7 @@ public class GetRoomsDelegate
         }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message);
+            logger.LogError("Error getting rooms: {Message}", ex.Message);
             logger.LogTrace(ex.StackTrace);
             await context.KO(ex);
         }

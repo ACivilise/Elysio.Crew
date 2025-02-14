@@ -1,5 +1,7 @@
 ﻿using Elysio.API.RequestDelegates.Rooms;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi.Models;
+using System.Collections.Generic;
 
 namespace Elysio.API.Routes;
 
@@ -12,6 +14,19 @@ public static class RoomRoutes
         // GetAll
         webApplication.MapGet($"/{_apiName}", GetRoomsDelegate.GetDelegate)
             // .RequireAuthorization(policy)
+            .WithOpenApi(operation => new(operation)
+            {
+                Parameters = new List<OpenApiParameter>
+                {
+                    new()
+                    {
+                        Name = "agents",
+                        In = ParameterLocation.Query,
+                        Required = false,
+                        Schema = new() { Type = "boolean" }
+                    }
+                }
+            })
             .WithMetadata(GetRoomsDelegate.GetDelegate.Method);
 
         // GetById

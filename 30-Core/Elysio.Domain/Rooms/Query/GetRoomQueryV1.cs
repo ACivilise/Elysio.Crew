@@ -27,7 +27,9 @@ public class GetRoomQueryV1Handler(ApplicationDbContext dbContext)
     async Task<RoomDTO> IRequestHandler<GetRoomQueryV1, RoomDTO>.Handle(
         GetRoomQueryV1 request, CancellationToken cancellationToken)
     {
-        var room = await dbContext.Rooms.FirstOrDefaultAsync(a => a.Id == request.Id);
+        var room = await dbContext.Rooms
+            .Include(r => r.Agents)
+            .FirstOrDefaultAsync(a => a.Id == request.Id);
 
         if (room == null)
             throw new NotFoundException("Room", request.Id);

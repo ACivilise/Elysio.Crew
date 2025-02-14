@@ -1,43 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getRooms, deleteRoom, createRoom, getAgents } from "@/services/api";
+import { useEffect, useState, useCallback } from "react";
+import { getRooms, deleteRoom, createRoom, updateRoom, getAgents } from "@/services/api";
 import type { RoomDTO, AgentDTO } from "@/models";
 import { RoomForm } from "../../components/RoomForm";
 import RightPanel from "@/components/RightPanel";
+import { RoomCard } from "@/components/RoomCard";
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<RoomDTO[]>([]);
   const [agents, setAgents] = useState<AgentDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
   const [error, setError] = useState("");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<RoomDTO | null>(null);
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async (retryCount = 0) => {
+    setIsLoadingRooms(true);
     try {
-      const response = await getRooms();
+      const response = await getRooms(true); // Always include agents since we need them for RoomCard
       setRooms(response.data);
-    } catch (err) {
-      setError("Failed to fetch rooms");
+      setError("");
+    } catch (err: any) {
+      const errorMessage = err.message || 'Unknown error';
+      console.error("Error fetching rooms:", err);
+      
+      if (retryCount < 2 && err.originalError?.code === 'ECONNABORTED') {
+        // Wait 2 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return fetchRooms(retryCount + 1);
+      }
+      
+      setError(`Failed to fetch rooms: ${errorMessage}`);
+    } finally {
+      setIsLoadingRooms(false);
     }
-  };
+  }, []);
 
-  const fetchAgents = async () => {
+  const fetchAgents = useCallback(async (retryCount = 0) => {
+    setIsLoadingAgents(true);
     try {
       const response = await getAgents();
       setAgents(response.data);
-    } catch (err) {
-      setError("Failed to fetch agents");
+      setError("");
+    } catch (err: any) {
+      const errorMessage = err.message || 'Unknown error';
+      console.error("Error fetching agents:", err);
+      
+      if (retryCount < 2 && err.originalError?.code === 'ECONNABORTED') {
+        // Wait 2 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return fetchAgents(retryCount + 1);
+      }
+      
+      setError(`Failed to fetch agents: ${errorMessage}`);
+    } finally {
+      setIsLoadingAgents(false);
     }
-  };
+  }, []);
 
   const handleCreate = async (room: Omit<RoomDTO, "id" | "createdAt" | "updatedAt" | "conversations">) => {
     try {
       await createRoom(room);
-      fetchRooms();
+      await fetchRooms();
       setIsPanelOpen(false);
-    } catch (err) {
-      setError("Failed to create room");
+    } catch (err: any) {
+      setError(`Failed to create room: ${err.message || 'Unknown error'}`);
     }
   };
 
@@ -45,25 +74,81 @@ export default function RoomsPage() {
     try {
       await deleteRoom(id);
       setRooms(rooms.filter((room) => room.id !== id));
-    } catch (err) {
-      setError("Failed to delete room");
+    } catch (err: any) {
+      setError(`Failed to delete room: ${err.message || 'Unknown error'}`);
     }
   };
 
-  useEffect(() => {
-    Promise.all([fetchRooms(), fetchAgents()]).finally(() => setIsLoading(false));
-  }, []);
+  const handleEdit = async (room: RoomDTO) => {
+    setEditingRoom(room);
+    setIsPanelOpen(true);
+  };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const handleUpdate = async (room: Omit<RoomDTO, "id" | "createdAt" | "updatedAt" | "conversations">) => {
+    try {
+      if (!editingRoom) return;
+      const updateData = {
+        id: editingRoom.id,
+        name: room.name,
+        description: room.description,
+        agentIds: room.agents.map(agent => agent.id)
+      };
+      await updateRoom(editingRoom.id, updateData);
+      await fetchRooms();
+      setIsPanelOpen(false);
+      setEditingRoom(null);
+    } catch (err: any) {
+      setError(`Failed to update room: ${err.message || 'Unknown error'}`);
+    }
+  };
+
+  const handlePanelClose = () => {
+    setIsPanelOpen(false);
+    setEditingRoom(null);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadData = async () => {
+      if (mounted) {
+        await fetchRooms();
+        await fetchAgents();
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [fetchRooms, fetchAgents]);
+
+  if (isLoadingRooms || isLoadingAgents) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-900">
+        <div className="text-gray-100">
+          {isLoadingRooms ? "Loading rooms..." : "Loading agents..."}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-900">
+        <div className="text-red-400">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Rooms</h1>
+        <h1 className="text-2xl font-bold text-gray-100">Rooms</h1>
         <button
           onClick={() => setIsPanelOpen(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-600 text-gray-100 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
         >
           Create Room
         </button>
@@ -71,32 +156,25 @@ export default function RoomsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {rooms.map((room) => (
-          <div key={room.id} className="border rounded-lg p-4 shadow">
-            <h2 className="text-xl font-semibold">{room.name}</h2>
-            <p className="text-gray-600 mt-2">
-              {room.description || "No description"}
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Created: {new Date(room.createdAt).toLocaleDateString()}
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => handleDelete(room.id)}
-                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+          <RoomCard
+            key={room.id}
+            room={room}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
         ))}
       </div>
 
       <RightPanel
         isOpen={isPanelOpen}
-        onClose={() => setIsPanelOpen(false)}
-        title="Create New Room"
+        onClose={handlePanelClose}
+        title={editingRoom ? "Edit Room" : "Create New Room"}
       >
-        <RoomForm agents={agents} onSubmit={handleCreate} />
+        <RoomForm 
+          agents={agents} 
+          onSubmit={editingRoom ? handleUpdate : handleCreate}
+          initialValues={editingRoom || undefined}
+        />
       </RightPanel>
     </div>
   );

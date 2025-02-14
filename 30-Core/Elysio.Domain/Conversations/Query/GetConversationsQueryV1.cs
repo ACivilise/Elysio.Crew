@@ -25,7 +25,8 @@ public class GetConversationsQueryV1Handler(ApplicationDbContext dbContext)
     async Task<IReadOnlyList<ConversationDTO>> IRequestHandler<GetConversationsQueryV1, IReadOnlyList<ConversationDTO>>.Handle(
         GetConversationsQueryV1 request, CancellationToken cancellationToken)
     {
-        var conversations = dbContext.Conversations;
+        var conversations = dbContext.Conversations
+            .AsNoTracking();
         return await conversations.Select(a => a.ToDto()).ToListAsync();
     }
 }
