@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_SCOPE: process.env.API_SCOPE,
   },
   output: "standalone",
+  dev: process.env.NODE_ENV !== "production",
 };
 
 export default nextConfig;

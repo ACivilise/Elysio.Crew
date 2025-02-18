@@ -6,6 +6,7 @@ import type { ConversationDTO, RoomDTO } from "@/models";
 import { ConversationForm } from "../../components/ConversationForm";
 import RightPanel from "@/components/RightPanel";
 import { ConversationCard } from "@/components/ConversationCard";
+import { AgentConversationPanel } from "@/components/AgentConversationPanel";
 
 export default function ConversationsPage() {
   const [conversations, setConversations] = useState<ConversationDTO[]>([]);
@@ -15,6 +16,7 @@ export default function ConversationsPage() {
   const [error, setError] = useState("");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingConversation, setEditingConversation] = useState<ConversationDTO | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<ConversationDTO | null>(null);
 
   const fetchConversations = useCallback(async (retryCount = 0) => {
     setIsLoadingConversations(true);
@@ -101,6 +103,14 @@ export default function ConversationsPage() {
     setEditingConversation(null);
   };
 
+  const handleStartConversation = (conversation: ConversationDTO) => {
+    setSelectedConversation(conversation);
+  };
+
+  const handleCloseConversation = () => {
+    setSelectedConversation(null);
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -156,6 +166,7 @@ export default function ConversationsPage() {
             rooms={rooms}
             onDelete={handleDelete}
             onEdit={handleEdit}
+            onStartConversation={handleStartConversation}
           />
         ))}
       </div>
@@ -171,6 +182,14 @@ export default function ConversationsPage() {
           initialValues={editingConversation || undefined}
         />
       </RightPanel>
+
+      {selectedConversation && (
+        <AgentConversationPanel
+          isOpen={!!selectedConversation}
+          onClose={handleCloseConversation}
+          conversation={selectedConversation}
+        />
+      )}
     </div>
   );
 }

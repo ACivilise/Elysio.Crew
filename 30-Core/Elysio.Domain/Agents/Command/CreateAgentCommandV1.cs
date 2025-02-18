@@ -2,6 +2,7 @@
 using Elysio.Entities;
 using Elysio.Mappers;
 using Elysio.Models.DTOs;
+using Elysio.Models.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,26 +18,20 @@ public class CreateAgentCommandV1 : IRequest<AgentDTO>
     public string? Description { get; set; }
 }
 
-public class CreateAgentCommandV1Validator
-    : AbstractValidator<CreateAgentCommandV1>
+public class CreateAgentCommandV1Validator : AbstractValidator<CreateAgentCommandV1>
 {
     public CreateAgentCommandV1Validator()
     {
-        RuleFor(a => a.Name)
-            .NotNull();
-
-        RuleFor(a => a.Prompt)
-            .NotNull();
+        RuleFor(a => a.Name).NotEmpty();
+        RuleFor(a => a.Prompt).NotEmpty();
     }
 }
 
-public class CreateAgentCommandV1Handler(ApplicationDbContext dbContext)
-    : IRequestHandler<CreateAgentCommandV1, AgentDTO>
+public class CreateAgentCommandV1Handler(ApplicationDbContext dbContext) : IRequestHandler<CreateAgentCommandV1, AgentDTO>
 {
     async Task<AgentDTO> IRequestHandler<CreateAgentCommandV1, AgentDTO>.Handle(
         CreateAgentCommandV1 request, CancellationToken cancellationToken)
     {
-        // on crée une conversation associé à cet utilisateur
         var newId = Guid.NewGuid();
         dbContext.Agents.Add(new Agent
         {

@@ -34,6 +34,11 @@ public static class ConversationRoutes
             // .RequireAuthorization(policy)
             .WithMetadata(DeleteConversationDelegate.GetDelegate.Method);
 
+        // Stream conversation with agents
+        webApplication.MapPost($"/{_apiName}/{{id}}/stream", StartConversationStreamDelegate.GetDelegate)
+            // .RequireAuthorization(policy)
+            .WithMetadata(StartConversationStreamDelegate.GetDelegate.Method);
+
         return webApplication;
     }
 }

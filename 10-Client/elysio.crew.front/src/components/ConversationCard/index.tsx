@@ -1,4 +1,4 @@
-import type { ConversationDTO, RoomDTO } from "@/models";
+import { type ConversationDTO, type RoomDTO } from "@/models";
 
 interface ConversationCardProps {
   conversation: ConversationDTO;
@@ -8,7 +8,15 @@ interface ConversationCardProps {
   onStartConversation: (conversation: ConversationDTO) => void;
 }
 
-export const ConversationCard = ({ conversation, rooms, onDelete, onEdit, onStartConversation }: ConversationCardProps) => {
+export function ConversationCard({
+  conversation,
+  rooms,
+  onDelete,
+  onEdit,
+  onStartConversation,
+}: ConversationCardProps) {
+  const room = rooms.find((r) => r.id === conversation.roomId);
+
   return (
     <div className="border border-gray-700 rounded-lg p-4 bg-gray-800 shadow">
       <h2 className="text-xl font-semibold text-gray-100">{conversation.name}</h2>
@@ -21,10 +29,10 @@ export const ConversationCard = ({ conversation, rooms, onDelete, onEdit, onStar
       <div className="mt-4 flex justify-end gap-2">
         <button
           onClick={() => onStartConversation(conversation)}
-          className="bg-green-600 text-gray-100 px-3 py-1 rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+          className="bg-green-600 text-gray-100 px-3 py-1 rounded hover:bg-green-700 transition-colors flex items-center gap-1"
         >
-          <span className="material-icons text-sm">rocket_launch</span>
-          Start
+          <span className="material-icons text-sm">chat</span>
+          Start Chat
         </button>
         <button
           onClick={() => onEdit(conversation)}
@@ -43,4 +51,4 @@ export const ConversationCard = ({ conversation, rooms, onDelete, onEdit, onStar
       </div>
     </div>
   );
-};
+}

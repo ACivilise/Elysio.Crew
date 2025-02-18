@@ -10,7 +10,7 @@ interface RightPanelProps {
 export default function RightPanel({ isOpen, onClose, children, title }: RightPanelProps) {
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-96 bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out ${
+      className={`fixed right-0 top-0 h-full w-2/3 xs:w-96 bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
     >

@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 
-const baseURL = "https://localhost:7056/api";
+const baseURL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
 const api = axios.create({
   baseURL,
@@ -64,3 +64,12 @@ export const updateConversation = (id: string, data: any) =>
   api.put(`/conversations/${id}`, data);
 export const deleteConversation = (id: string) =>
   api.delete(`/conversations/${id}`);
+
+export const startConversationStream = (conversationId: string, initialMessage: string) => 
+  fetch(`${baseURL}/conversations/${conversationId}/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ conversationId, initialMessage }),
+  });

@@ -14,8 +14,7 @@ public class CreateConversationCommandV1 : IRequest<ConversationDTO>
     public Guid RoomId { get; set; }
 }
 
-public class CreateConversationCommandV1Validator
-    : AbstractValidator<CreateConversationCommandV1>
+public class CreateConversationCommandV1Validator : AbstractValidator<CreateConversationCommandV1>
 {
     public CreateConversationCommandV1Validator()
     {
@@ -24,13 +23,11 @@ public class CreateConversationCommandV1Validator
     }
 }
 
-public class CreateConversationCommandV1Handler(ApplicationDbContext dbContext)
-    : IRequestHandler<CreateConversationCommandV1, ConversationDTO>
+public class CreateConversationCommandV1Handler(ApplicationDbContext dbContext) : IRequestHandler<CreateConversationCommandV1, ConversationDTO>
 {
     async Task<ConversationDTO> IRequestHandler<CreateConversationCommandV1, ConversationDTO>.Handle(
         CreateConversationCommandV1 request, CancellationToken cancellationToken)
     {
-        // on crée une conversation associé à cet utilisateur
         var newId = Guid.NewGuid();
         dbContext.Conversations.Add(new Conversation
         {

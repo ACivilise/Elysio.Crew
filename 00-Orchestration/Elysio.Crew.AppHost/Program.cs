@@ -26,4 +26,11 @@ var webapp = builder.AddNpmApp("webapp", @"..\..\10-Client\elysio.crew.front", "
     .WithReference(api)
     .WaitFor(api);
 
+
+if (builder.Environment.EnvironmentName == "Development" && builder.Configuration["DOTNET_LAUNCH_PROFILE"] == "https")
+{
+    // Disable TLS certificate validation in development, see https://github.com/dotnet/aspire/issues/3324 for more details.
+    webapp.WithEnvironment("NODE_TLS_REJECT_UNAUTHORIZED", "0");
+}
+
 builder.Build().Run();

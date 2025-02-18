@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { AgentDTO } from "@/models";
 
 interface AgentFormProps {
-  onSubmit: (agent: { id?: string; name: string; description?: string; model: string; temperature: number; prompt: string }) => Promise<void>;
+  onSubmit: (agent: Omit<AgentDTO,  "createdAt" | "updatedAt" | "rooms" | "messages">) => Promise<void>;
   initialValues?: AgentDTO;
 }
 
@@ -26,7 +26,7 @@ export function AgentForm({ onSubmit, initialValues }: AgentFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit({
-      id: initialValues?.id,
+      id: initialValues?.id ?? "",
       name,
       description,
       model,

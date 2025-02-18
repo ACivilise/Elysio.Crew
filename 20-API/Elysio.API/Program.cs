@@ -4,6 +4,7 @@ using Elsio.Crew.Domain;
 using Elysio.API.Routes;
 using Elysio.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using Scalar.AspNetCore;
 
@@ -14,7 +15,6 @@ builder.Services.AddLogging(loggingBuilder =>
 {
     loggingBuilder.AddConsole();
     loggingBuilder.AddDebug();
-    // Add other logging providers as needed
 });
 
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -29,8 +29,8 @@ builder.AddNpgsqlDbContext<ApplicationDbContext>(
 builder.Services.MigrateDb();
 
 string connectionString = builder.Configuration.GetConnectionString("Ollama") ?? "";
-builder.Services.AddOllamaChatCompletion("llama3.2:1b", new Uri(connectionString));
-
+builder.Services.AddOllamaChatCompletion("llama3.2", new Uri($"{connectionString}/v1"));
+builder.Services.AddKernel();
 builder.Services.AddCoreServices();
 builder.Services.AddDomainServices();
 
