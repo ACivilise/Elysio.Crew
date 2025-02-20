@@ -4,7 +4,6 @@ using Elsio.Crew.Domain;
 using Elysio.API.Routes;
 using Elysio.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using Scalar.AspNetCore;
 
@@ -37,7 +36,7 @@ builder.Services.AddDomainServices();
 builder.Services.AddOpenApi();
 builder.Services.AddCors();
 
-var app = builder.Build();
+var app = builder.Build();  // Mise en place de la chaine de traitement des requêtes HTTP
 
 app.MapDefaultEndpoints();
 
