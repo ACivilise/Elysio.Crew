@@ -66,7 +66,7 @@ After running `dotnet run`, the following endpoints will be available:
 
 - Aspire Dashboard: Opens automatically in your browser
 - Web Application: http://localhost:58300
-- API: Available through the Aspire Dashboard
+- API: https://localhost:7056/
 - PostgreSQL: Port 65534
 - Ollama: Managed internally by Aspire
 
@@ -94,8 +94,8 @@ The backend is built using:
 
 The API is documented using OpenAPI (Swagger) and enhanced with Scalar. When running in development mode, you can access:
 
-1. Interactive API documentation at: `http://localhost:[port]/scalar`
-2. OpenAPI specification at: `http://localhost:[port]/swagger`
+1. Interactive API documentation at: `https://localhost:7056/scalar`
+2. OpenAPI specification at: `https://localhost:7056/openapi/v1.json`
 
 Scalar provides a modern, user-friendly interface for exploring and testing the API endpoints, with features like:
 - Interactive request builder
