@@ -112,3 +112,7 @@ The application provides several API endpoints for managing:
 - Messages: Handle individual messages in conversations
 
 All endpoints are accessible without authentication for demonstration purposes and follow RESTful conventions.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
