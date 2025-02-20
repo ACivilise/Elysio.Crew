@@ -3,40 +3,77 @@ using Elysio.Entities;
 using Elysio.Models.Enums;
 using Elysio.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Elysio.Services
 {
-    public class ApprovalTerminationStrategy
+    public class AgentChat
     {
-        private readonly int _maxIterations;
+        private readonly List<IChatCompletionService> _agents = new();
+        private readonly ChatHistory _history;
         private readonly HashSet<string> _approverNames;
-        private int _currentIteration = 0;
+        private bool _isComplete;
+        private readonly int _maxIterations;
+        private int _currentIteration;
 
-        public ApprovalTerminationStrategy(int maxIterations, IEnumerable<string> approverNames)
+        public bool IsComplete => _isComplete;
+
+        public AgentChat(IEnumerable<IChatCompletionService> agents, IEnumerable<string> approverNames, int maxIterations = 10)
         {
-            _maxIterations = maxIterations;
+            _agents.AddRange(agents);
             _approverNames = new HashSet<string>(approverNames);
+            _maxIterations = maxIterations;
+            _history = new ChatHistory();
+            _history.AddSystemMessage("You are participating in a group chat. Work together to assist the user.");
         }
 
-        public bool ShouldTerminate(string content, string agentName)
+        public void AddChatMessage(string content, string role)
         {
-            _currentIteration++;
-
-            // Check if max iterations reached
-            if (_currentIteration >= _maxIterations)
+            switch (role.ToLower())
             {
-                return true;
+                case "system":
+                    _history.AddSystemMessage(content);
+                    break;
+                case "assistant":
+                    _history.AddAssistantMessage(content);
+                    break;
+                case "user":
+                    _history.AddUserMessage(content);
+                    break;
             }
+        }
 
-            // Only allow approval from designated approvers
-            if (!_approverNames.Contains(agentName))
+        public async IAsyncEnumerable<IReadOnlyList<ChatMessageContent>> InvokeAsync()
+        {
+            while (!_isComplete && _currentIteration < _maxIterations)
             {
-                return false;
-            }
+                foreach (var agent in _agents)
+                {
+                    var responses = await agent.GetChatMessageContentsAsync(_history);
 
-            // Terminate if an approver's message contains "approve"
-            return content.Contains("approve", StringComparison.OrdinalIgnoreCase);
+                    if (responses.Count > 0)
+                    {
+                        var response = responses[0];
+                        if (!string.IsNullOrEmpty(response.Content))
+                        {
+                            _history.AddAssistantMessage(response.Content);
+                            yield return responses;
+
+                            // Check if this is an approver and they approved
+                            var agentName = response.Metadata?["AgentName"]?.ToString();
+                            if (agentName != null && 
+                                _approverNames.Contains(agentName) && 
+                                response.Content.Contains("approve", StringComparison.OrdinalIgnoreCase))
+                            {
+                                _isComplete = true;
+                                yield break;
+                            }
+                        }
+                    }
+                }
+                _currentIteration++;
+            }
         }
     }
 
@@ -44,8 +81,6 @@ namespace Elysio.Services
             IOllamaService ollamaService,
             ApplicationDbContext dbContext) : IAgentsService
     {
-        private const int MaxIterations = 10;
-
         public async IAsyncEnumerable<string> ChatWithAgents(string initialMessage, Guid conversationId)
         {
             var conversation = await dbContext.Conversations
@@ -63,54 +98,32 @@ namespace Elysio.Services
             if (agents.Count < 2)
                 throw new InvalidOperationException("Room must have at least 2 agents for a conversation");
 
-            // Create chat agents and store them with their corresponding entities
-            var chatAgents = new List<(IChatCompletionService Service, Agent Entity)>();
-            foreach (var agent in agents)
-            {
-                chatAgents.Add((ollamaService.CreateAgent(agent.Name, agent.Prompt), agent));
-            }
+            // Create chat agents for each participant
+            var chatAgents = agents.Select(agent => 
+                ollamaService.CreateCompletionService(agent.Name, agent.Prompt)).ToList();
 
-            // Create a group chat with the agents
-            var chatHistory = ollamaService.CreateGroupChat(chatAgents.Select(a => a.Service), initialMessage);
+            // Create chat with the agents and set the last agent as approver
+            var chat = new AgentChat(chatAgents, new[] { agents.Last().Name });
 
-            // Store initial user message
+            // Store and add initial user message
             await StoreMessage(initialMessage, conversationId, RolesEnum.User);
+            chat.AddChatMessage(initialMessage, "user");
 
-            // Set up the termination strategy - consider the last agent as the approver
-            var approver = agents.Last();
-            var terminationStrategy = new ApprovalTerminationStrategy(
-                MaxIterations,
-                new[] { approver.Name }
-            );
-
-            foreach (var (service, entity) in chatAgents)
+            // Process the chat
+            await foreach (var responses in chat.InvokeAsync())
             {
-                string? responseContent = null;
-
-                var response = await service.GetChatMessageContentAsync(chatHistory);
-
-                if (response?.Content != null)
+                foreach (var message in responses)
                 {
-                    responseContent = response.Content;
-
-                    // Store the message in the database
-                    await StoreMessage(
-                        responseContent,
-                        conversationId,
-                        RolesEnum.Agent,
-                        entity.Id
-                    );
-
-                    // Add the response to chat history for context
-                    chatHistory.AddAssistantMessage(responseContent);
-
-                    // Yield the response with agent information
-                    yield return $"{responseContent}|{RolesEnum.Agent}|{entity.Name}";
-
-                    // Check if we should terminate the conversation
-                    if (terminationStrategy.ShouldTerminate(responseContent, entity.Name))
+                    var agentName = message.Metadata?["AgentName"]?.ToString();
+                    if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(message.Content))
                     {
-                        yield break;
+                        var agentEntity = agents.First(a => a.Name == agentName);
+                        
+                        // Store the message
+                        await StoreMessage(message.Content, conversationId, RolesEnum.Agent, agentEntity.Id);
+
+                        // Yield the response
+                        yield return $"{message.Content}|{RolesEnum.Agent}|{agentName}";
                     }
                 }
             }

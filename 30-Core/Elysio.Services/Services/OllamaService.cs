@@ -4,7 +4,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace Elysio.Services
 {
-    public class OllamaService(IChatCompletionService chatCompletionService, Kernel kernel) : IOllamaService
+    public class OllamaService(IChatCompletionService chatCompletionService) : IOllamaService
     {
         private readonly Dictionary<string, string> _agentPrompts = new();
 
@@ -15,8 +15,8 @@ namespace Elysio.Services
 
             try
             {
-                var chatResult = await chatCompletionService.GetChatMessageContentAsync(message);
-                return chatResult?.Content ?? string.Empty;
+                var chatResult = await chatCompletionService.GetChatMessageContentsAsync(history);
+                return chatResult?.FirstOrDefault()?.Content ?? string.Empty;
             }
             catch (Exception ex)
             {
@@ -24,21 +24,13 @@ namespace Elysio.Services
             }
         }
 
-        public IChatCompletionService CreateAgent(string name, string instructions)
+        public IChatCompletionService CreateCompletionService(string name, string instructions)
         {
-            var chatHistory = new ChatHistory();
-            chatHistory.AddSystemMessage($"Your name is {name}. {instructions}");
             // Store the agent's prompt for later reference
             _agentPrompts[name] = instructions;
-            return chatCompletionService;
-        }
 
-        public ChatHistory CreateGroupChat(IEnumerable<IChatCompletionService> agents, string initialPrompt)
-        {
-            var chatHistory = new ChatHistory();
-            chatHistory.AddSystemMessage("You are participating in a group chat. Work together to assist the user.");
-            chatHistory.AddUserMessage(initialPrompt);
-            return chatHistory;
+            // Create a wrapper around the chat completion service that includes the agent's context
+            return new AgentChatCompletionService(chatCompletionService, name, instructions);
         }
 
         public string? GetAgentPrompt(string name)
@@ -47,10 +39,66 @@ namespace Elysio.Services
         }
     }
 
-    public class ChatResult
+    public class AgentChatCompletionService : IChatCompletionService
     {
-        public string Content { get; set; } = string.Empty;
-        public string AgentName { get; set; } = string.Empty;
+        private readonly IChatCompletionService _innerService;
+        private readonly string _agentName;
+        private readonly string _instructions;
+
+        public AgentChatCompletionService(IChatCompletionService innerService, string agentName, string instructions)
+        {
+            _innerService = innerService;
+            _agentName = agentName;
+            _instructions = instructions;
+        }
+
+        public IReadOnlyDictionary<string, object?> Attributes => _innerService.Attributes;
+
+        public async Task<IReadOnlyList<ChatMessageContent>> GetChatMessageContentsAsync(
+            ChatHistory chatHistory,
+            PromptExecutionSettings? executionSettings = null,
+            Kernel? kernel = null,
+            CancellationToken cancellationToken = default)
+        {
+            // Create a new chat history that includes the agent's context
+            var agentHistory = new ChatHistory();
+            
+            // Add the agent's instructions as a system message
+            agentHistory.AddSystemMessage($"You are {_agentName}. {_instructions}");
+            
+            // Add the existing chat history
+            var enumeratedHistory = chatHistory.ToArray();
+            foreach (var message in enumeratedHistory)
+            {
+                if (message.Content != null)
+                {
+                    agentHistory.AddMessage(message.Role, message.Content);
+                }
+            }
+
+            // Get the response from the inner service
+            var results = await _innerService.GetChatMessageContentsAsync(agentHistory, executionSettings, kernel, cancellationToken);
+
+            // Add agent metadata to the responses
+            foreach (var result in results)
+            {
+                result.Metadata = new Dictionary<string, object?>
+                {
+                    ["AgentName"] = _agentName
+                };
+            }
+
+            return results;
+        }
+
+        public IAsyncEnumerable<StreamingChatMessageContent> GetStreamingChatMessageContentsAsync(
+            ChatHistory chatHistory,
+            PromptExecutionSettings? executionSettings = null,
+            Kernel? kernel = null,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException("Streaming is not supported by this service");
+        }
     }
 }
 
